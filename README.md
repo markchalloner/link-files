@@ -6,7 +6,7 @@ This script manages the symlinking of user files from per host folders. By defau
 
 from the folders:
 
-- ${HOME}/data/${HOSTNAME}/
+- ${HOME}/.link-files/${HOSTNAME}/
 - ${HOME}/.link-files/#all/
 
 These folders can be changed using the options below.

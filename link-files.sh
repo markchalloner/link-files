@@ -25,7 +25,7 @@ usage() {
 
 		from the folders:
 
-		- \${HOME}/${dir-data}/\${HOSTNAME}/
+		- \${HOME}/${dir_data}/\${HOSTNAME}/
 		- \${HOME}/${dir_data}/#all/
 
 		These folders can be changed using the options below.
