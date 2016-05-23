@@ -45,7 +45,7 @@ Install:
 git clone https://github.com/markchalloner/link-files.git
 cd link-files
 sudo make install
-                ```
+```
 
 Uninstall:
 
