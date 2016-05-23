@@ -35,6 +35,28 @@ Options
   -d, --dryrun               optional: performs a dryrun
 ```
 
+## Install/Uninstall
+
+Use the included make file to install or uninstall
+
+Install:
+
+```
+git clone https://github.com/markchalloner/link-files.git
+cd link-files
+sudo make install
+                ```
+
+Uninstall:
+
+```
+git clone https://github.com/markchalloner/link-files.git
+cd link-files
+sudo make uninstall
+```
+
+## Readme
+
 Generated with:
 
 ```
