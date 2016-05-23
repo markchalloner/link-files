@@ -164,16 +164,20 @@ function do_install() {
 	local behaviour="$1"
 	local dir_host="$2"
 	local dir_all="$3"
-	declare -A dirs
+	local names=
+	local dirs=
 	case "$behaviour" in
 		host)
-			dirs=( ["host"]="$dir_host" )
+			names=( "host" ) 
+			dirs=( "$dir_host" )
 		;;
 		hostorall|hostandall)
-			dirs=( ["host"]="$dir_host" ["all"]="$dir_all" )
+			names=( "host" "all" )
+			dirs=( "$dir_host" "$dir_all" )
 		;;
 		all)
-			dirs=( ["all"]="$dir_all" )
+			names=( "host" )
+			dirs=( "$dir_all" )
 		;;
 	esac
 	local files_done=()
@@ -183,7 +187,7 @@ function do_install() {
 		local dir="${dirs[$i]}" 
 		if [ -d "${dir}" ]
 		then
-			echo Linking files from $i folder
+			echo "Linking files from ${names[${i}]} folder"
 			local j
 			for j in $(ls -A ${dir})
 			do
@@ -200,24 +204,25 @@ function do_install() {
 					if [ -n "$force" ]
 					then
 						to_bak="${to}.bak.${date}"
-						echo The file $to exists and is not a link, renaming to $(basename $to_bak)
-						execute mv $to $to_bak
+						echo -e "\tThe file $to exists and is not a link, renaming to $(basename $to_bak)"
+						execute mv "$to" "$to_bak"
 						link=1
 					else 
-						echo -e "The file $to exists and is not a link, skipping. Please review and link manually:\n\tln -s $from $to"
+						echo -e "\tThe file $to exists and is not a link, skipping. Please review and link manually:\n\tln -s \"$from\" \"$to\""
+						link=0
 					fi
 				else
 					link=1
 				fi
-				if [ -n "$link" ]
+				if [ $link -eq 1 ]
 				then
 					# Probably safe to delete an existing symlink
 					if [ -L "$to" ]
 					then
-						execute rm $to
+						execute rm "$to"
 					fi
-					echo Linking $to -\> $from
-					execute ln -s $from $to
+					echo -e "\tLinking from $from to $to"
+					execute ln -s "$from" "$to"
 				fi
 				files_done+=("$j")
 			done
