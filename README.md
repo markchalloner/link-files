@@ -1,17 +1,17 @@
 # Link Files
 
-This script manages the symlinking of user files from an another directory. By default files are symlinked to 
+This script manages the symlinking of user files from per host folders. By default files are symlinked to:
 
 - ${HOME}/
 
-from the folders
+from the folders:
 
-- ${HOME}/data/<hostname>/
+- ${HOME}/data/${HOSTNAME}/
 - ${HOME}/.link-files/#all/
 
 These folders can be changed using the options below.
 
-The folder ${HOME}/.link-files can itself be a symlink to enable usage with a cloud provider (e.g. Dropbox)
+The folder ${HOME}/.link-files/ can itself be a symlink to enable usage with a cloud provider (e.g. Dropbox)
 
 ## Usage
 

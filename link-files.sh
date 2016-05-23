@@ -1,5 +1,5 @@
 #!/bin/bash
-# Manages the symlinking of user files from another directory
+# Manages the symlinking of user files from per host folders
 
 ########################################
 # Variables
@@ -19,18 +19,18 @@ dir_all_basename="#all"
 usage() {
 	cat <<-EOF
 
-		This script manages the symlinking of user files from an another directory. By default files are symlinked to 
+		This script manages the symlinking of user files from per host folders. By default files are symlinked to:
 
 		- \${HOME}/
 
-		from the folders
+		from the folders:
 
-		- \${HOME}/${dir-data}/<hostname>/
+		- \${HOME}/${dir-data}/\${HOSTNAME}/
 		- \${HOME}/${dir_data}/#all/
 
 		These folders can be changed using the options below.
 
-		The folder \${HOME}/${dir_data} can itself be a symlink to enable usage with a cloud provider (e.g. Dropbox)
+		The folder \${HOME}/${dir_data}/ can itself be a symlink to enable usage with a cloud provider (e.g. Dropbox)
 		
 		Usage: $(basename $0) [options]
 		
