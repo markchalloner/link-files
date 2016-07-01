@@ -5,18 +5,18 @@
 # Variables
 ########################################
 
-host=$(hostname | tr '[:upper:]' '[:lower:]')
-date=$(date '+%Y%m%d%H%M%S')
-dir_data=.link-files
-dir_to_default=$HOME
-dir_from_default=${dir_to_default}/${dir_data}
+host="$(hostname | tr '[:upper:]' '[:lower:]')"
+date="$(date '+%Y%m%d%H%M%S')"
+dir_data=".link-files"
+dir_to_default="${HOME}"
+dir_from_default="${dir_to_default}/${dir_data}"
 dir_all_basename="#all"
 
 ########################################
 # Usage
 ########################################
 
-usage() {
+function usage() {
 	cat <<-EOF
 
 		This script manages the symlinking of user files from per host folders. By default files are symlinked to:
@@ -32,7 +32,7 @@ usage() {
 
 		The folder \${HOME}/${dir_data}/ can itself be a symlink to enable usage with a cloud provider (e.g. Dropbox)
 		
-		Usage: $(basename $0) [options]
+		Usage: $(basename ${0}) [options]
 		
 		Options
 
@@ -46,7 +46,7 @@ usage() {
 		                               hostorall  - use files from the host folder if the folder exist otherwise the all folder
 		                               hostandall - use files from the host folder and the all folder if the file doesn't exist in the host folder
 		                               all        - use only files from the all folder never the host folder
-		  -c, --create               optional: create the link-files folder hierachy at --from or $dir_from_default if not specified
+		  -c, --create               optional: create the link-files folder hierachy at --from or ${dir_from_default} if not specified
 		  -o, --force                optional: links files even if there is one present. Will save current file as <filename>.bak.<YYYYMMDDHHMMSS>
 		  -d, --dryrun               optional: performs a dryrun
 
@@ -54,10 +54,10 @@ usage() {
 	exit
 }
 
-readme() {
-	cat <<-EOF > $(dirname $0)/README.md
+function readme() {
+	cat <<-EOF > $(dirname ${0})/README.md
 		# Link Files
-		$(source $0 -h | sed 's/^Usage: /## Usage\'$'\n''\'$'\n''```\'$'\n''/')
+		$(source ${0} -h | sed 's/^Usage: /## Usage\'$'\n''\'$'\n''```\'$'\n''/')
 		$(echo '```')
 		
 		## Install/Uninstall
@@ -85,7 +85,7 @@ readme() {
 		Generated with:
 		
 		\`\`\`
-		$(basename $0) -r
+		$(basename ${0}) -r
 		\`\`\`
 	EOF
 	exit
@@ -95,25 +95,25 @@ readme() {
 # Execute
 ########################################
 
-execute() {
-	if [ -z "$dryrun" ]
+function execute() {
+	if [ -z "${dryrun}" ]
 	then
 		local runner=eval
 	else
 		local runner=echo
 	fi
-	$runner "$@"
+	${runner} "${@}"
 }
 
 ########################################
 # Helpers
 ########################################
 
-array_contains() {
+function array_contains() {
 	local i
-	for i in "$1" 
+	for i in "${1}"
 	do 
-		if [ "$i" == "$2" ]
+		if [ "${i}" == "${2}" ]
 		then
 			return 0
 		fi
@@ -122,9 +122,9 @@ array_contains() {
 }
 
 # Takes a path and checks whether it has a trailing slash
-dir_trailing_slash_has() {
+function dir_trailing_slash_has() {
 	local char=${1:(-1)} # Get last character
-	if [ "$char" == "/" ]
+	if [ "${char}" == "/" ]
 	then
 		return 0
 	fi
@@ -132,20 +132,20 @@ dir_trailing_slash_has() {
 }
 
 # Takes a path and removes trailing slashes
-dir_trailing_slash_remove() {
-	local dir="$1"
+function dir_trailing_slash_remove() {
+	local dir="${1}"
 	local i
 	# Limit to 100 loops
 	for i in {1..100}
 	do
-		if dir_trailing_slash_has "$dir"
+		if dir_trailing_slash_has "${dir}"
 		then
 			dir="${dir%?}"
 		else
 			break
 		fi
 	done
-	echo "$dir"
+	echo "${dir}"
 }
 
 ########################################
@@ -153,144 +153,161 @@ dir_trailing_slash_remove() {
 ########################################
 
 function do_create() {
-	dir_from="$1"
-	dir_all="$2"
-	dir_host="$3"
-	mkdir -p $dir_all
-	mkdir -p $dir_host
+	dir_from="${1}"
+	dir_all="${2}"
+	dir_host="${3}"
+	mkdir -p "${dir_all}"
+	mkdir -p "${dir_host}"
 }
 
 function do_install() {
-	local behaviour="$1"
-	local dir_host="$2"
-	local dir_all="$3"
+	local behaviour="${1}"
+	local dir_host="${2}"
+	local dir_all="${3}"
 	local names=
 	local dirs=
-	case "$behaviour" in
+	case "${behaviour}" in
 		host)
 			names=( "host" ) 
-			dirs=( "$dir_host" )
-		;;
+			dirs=( "${dir_host}" )
+			;;
 		hostorall|hostandall)
 			names=( "host" "all" )
-			dirs=( "$dir_host" "$dir_all" )
-		;;
+			dirs=( "${dir_host}" "${dir_all}" )
+			;;
 		all)
 			names=( "host" )
-			dirs=( "$dir_all" )
-		;;
+			dirs=( "${dir_all}" )
+			;;
 	esac
 	local files_done=()
 	local i
 	for i in "${!dirs[@]}"
 	do
-		local dir="${dirs[$i]}" 
+		local dir="${dirs[${i}]}"
 		if [ -d "${dir}" ]
 		then
 			echo "Linking files from ${names[${i}]} folder"
 			local j
 			for j in $(ls -A ${dir})
 			do
-				local from=${dir}/$j
-				local to=${dir_to}/$j
+				local from=${dir}/${j}
+				local to=${dir_to}/${j}
 				# If we have already linked the file then break
-				if array_contains "$files_done" "$j"
+				if array_contains "${files_done}" "${j}"
 				then
 					break
 				fi
 				local link
-				if [ -e "$to" -a ! -L "$to" ]
+				if [ -e "${to}" -a ! -L "${to}" ]
 				then
-					if [ -n "$force" ]
+					if [ -n "${force}" ]
 					then
 						to_bak="${to}.bak.${date}"
-						echo -e "\tThe file $to exists and is not a link, renaming to $(basename $to_bak)"
-						execute mv "$to" "$to_bak"
+						echo -e "\tThe file ${to} exists and is not a link, renaming to $(basename ${to_bak})"
+						execute mv "${to}" "${to_bak}"
 						link=1
 					else 
-						echo -e "\tThe file $to exists and is not a link, skipping. Please review and link manually:\n\tln -s \"$from\" \"$to\""
+						echo -e "\tThe file ${to} exists and is not a link, skipping. Please review and link manually:\n\t\tln -s \"${from}\" \"${to}\""
 						link=0
 					fi
 				else
 					link=1
 				fi
-				if [ $link -eq 1 ]
+				if [ ${link} -eq 1 ]
 				then
 					# Probably safe to delete an existing symlink
-					if [ -L "$to" ]
+					if [ -L "${to}" ]
 					then
-						execute rm "$to"
+						execute rm "${to}"
 					fi
-					echo -e "\tLinking from $from to $to"
-					execute ln -s "$from" "$to"
+					echo -e "\tLinking from ${from} to ${to}"
+					execute ln -s "${from}" "${to}"
+					if [ -d "${from}" ] && [ -f "${from}/install.sh" ]
+					then
+						echo -e "\t\tRunning ${to}/install.sh"
+						. ${to}/install.sh
+					fi
 				fi
-				files_done+=("$j")
+				files_done+=("${j}")
 			done
 			
 			# Break if we have done the host and behaviour is hostorall
-			if [ "$behaviour" == "hostorall" ]
+			if [ "${behaviour}" == "hostorall" ]
 			then
 				break
 			fi
 		else
-			echo Unable to find $dir
+			echo "Unable to find ${dir}"
 		fi
 	done
 }
 
 function do_uninstall() {
-	local behaviour="$1"
-	declare -A dirs
-	case "$behaviour" in
+	local behaviour="${1}"
+	local dir_host="${2}"
+	local dir_all="${3}"
+	local names=
+	local dirs=
+	case "${behaviour}" in
 		host)
-			dirs=(["host"]="$2")
-		;;
+			names=( "host" )
+			dirs=( "${dir_host}" )
+			;;
 		hostorall|hostandall)
-			dirs=(["host"]="$2" ["all"]="$3")
-		;;
+			names=( "host" "all" )
+			dirs=( "${dir_host}" "${dir_all}" )
+			;;
 		all)
-			dirs=(["all"]="$3")
-		;;
+			names=( "host" )
+			dirs=( "${dir_all}" )
+			;;
 	esac
+	# Require a type and to be one of data, git, sites
 	local files_done=()
 	local i
 	for i in "${!dirs[@]}"
 	do
-		local dir="${dirs[$i]}" 
+		local dir="${dirs[${i}]}" 
 		if [ -d "${dir}" ]
 		then
-			echo Unlinking files from $i folder
+			echo "Unlinking files from ${names[${i}]} folder"
 			local j
 			for j in $(ls -A ${dir})
 			do
-				local from=${dir}/$j
-				local to=${dir_to}/$j
+				local from=${dir}/${j}
+				local to=${dir_to}/${j}
 				# If we have already unlinked the file then break
-				if array_contains "$files_done" "$j"
+				if array_contains "${files_done}" "${j}"
 				then
 					break
 				fi
-				if [ -e "$to" -a ! -L "$to" ]
+				if [ -e "${to}" -a ! -L "${to}" ]
 				then
-					echo -e "The file $to exists and is not a link, skipping. Please review and remove manually:\n\trm $to"
+				echo -e "\tThe file ${to} exists and is not a link, skipping. Please review and remove manually:\n\t\trm ${to}"
 				else
 					# Probably safe to delete an existing symlink
-					if [ -L "$to" ]
+					if [ -L "${to}" ]
 					then
-						echo Unlinking $to \($from\)
-						execute rm $to
+						echo -e "\tUnlinking ${to} (${from})"
+						if [ -d "${from}" ] && [ -f "${from}/uninstall.sh" ]
+						then
+							echo -e "\t\tRunning ${to}/uninstall.sh"
+							. ${to}/uninstall.sh
+						fi
+						execute rm "${to}"
 					fi
 				fi
-				files_done+=("$j")
+				files_done+=("${j}")
 			done
 			
 			# Break if we have done the host and behaviour is hostorall
-			if [ "$behaviour" == "hostorall" ]
+			if [ "${behaviour}" == "hostorall" ]
 			then
 				break
 			fi
 		else
-			echo Unable to find $dir
+			echo "Unable to find ${dir}"
 		fi
 	done	
 }
@@ -300,12 +317,12 @@ function do_uninstall() {
 ########################################
 
 # Set variables
-dir_to="$dir_to_default"
-dir_from="$dir_from_default"
+dir_to="${dir_to_default}"
+dir_from="${dir_from_default}"
 
 while :
 do
-	case $1 in
+	case ${1} in
 		-i|--install)
 			install=1
 			;;
@@ -313,15 +330,15 @@ do
 			uninstall=1
 			;;
 		-f|--from)
-			dir_from="$(dir_trailing_slash_remove $2)"
+			dir_from="$(dir_trailing_slash_remove ${2})"
 			shift
 			;;
 		-t|--to)
-			dir_to="$(dir_trailing_slash_remove $2)"
+			dir_to="$(dir_trailing_slash_remove ${2})"
 			shift
 			;;
 		-b|--behaviour)
-			behaviour="$(echo $2)"
+			behaviour="${2}"
 			shift
 			;;
 		-c|--create)
@@ -356,40 +373,39 @@ do
 done
 
 # Check for action
-[ -n "$create" ] || [ -n "$install" ] || [ -n "$uninstall" ] || usage
+[ -n "${create}" ] || [ -n "${install}" ] || [ -n "${uninstall}" ] || usage
 
 # Set default behaviour
-if [ -z "$behaviour" ] && $(echo $behaviour | grep -q -v "^\(host\|host\(and\|or\)all\|all\)$")
+if [ -z "${behaviour}" ] && $(echo "${behaviour}" | grep -q -v "^\(host\|host\(and\|or\)all\|all\)$")
 then
 	behaviour="hostandall"
 fi
 
 # Dryrun option
-if [ -n "$dryrun" ]
+if [ -n "${dryrun}" ]
 then
-	# Require a type and to be one of data, git, sites
 	echo "Dry run option activated. Commands will be logged instead of being run."
 fi
 
 # Set variables
-dir_all="$dir_from/${dir_all_basename}"
-dir_host="$dir_from/${host}"
+dir_all="${dir_from}/${dir_all_basename}"
+dir_host="${dir_from}/${host}"
 
-if [ -n "$create" ]
+if [ -n "${create}" ]
 then
 	echo Creating...
-	do_create "$dir_from" "$dir_host" "$dir_all"
+	do_create "${dir_from}" "${dir_host}" "${dir_all}"
 	echo Done
 fi
 
-if [ -n "$install" ]
+if [ -n "${install}" ]
 then
 	echo Installing...
-	do_install "$behaviour" "$dir_host" "$dir_all"
+	do_install "${behaviour}" "${dir_host}" "${dir_all}"
 	echo Done
-elif [ -n "$uninstall" ]
+elif [ -n "${uninstall}" ]
 then
 	echo Uninstalling...
-	do_uninstall "$behaviour" "$dir_host" "$dir_all"
+	do_uninstall "${behaviour}" "${dir_host}" "${dir_all}"
 	echo Done
 fi
