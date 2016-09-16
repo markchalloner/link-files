@@ -189,16 +189,26 @@ function do_install() {
 		then
 			echo "Linking files from ${names[${i}]} folder"
 			local j
-			for j in $(ls -A ${dir})
+			for j in $(find ${dir} -mindepth 1 -not -name ".DS_Store")
 			do
-				local from=${dir}/${j}
-				local to=${dir_to}/${j}
+				local file="${j#${dir}/}"
+				local from="${dir}/${file}"
+				local to="${dir_to}/${file}"
 				# If we have already linked the file then break
-				if array_contains "${files_done}" "${j}"
+				if array_contains "${files_done}" "${file}"
 				then
 					break
 				fi
 				local link
+				if [ -d "${from}" ]
+				then
+					if [ ! -e "${to}" ]
+					then
+						echo -e "\tCreating folder ${to}"
+						execute mkdir -p "${to}"
+					fi
+					continue
+				fi
 				if [ -e "${to}" -a ! -L "${to}" ]
 				then
 					if [ -n "${force}" ]
@@ -223,13 +233,13 @@ function do_install() {
 					fi
 					echo -e "\tLinking from ${from} to ${to}"
 					execute ln -s "${from}" "${to}"
-					if [ -d "${from}" ] && [ -f "${from}/install.sh" ]
+					if [ $(basename "${from}") == "install.sh" ]
 					then
-						echo -e "\t\tRunning ${to}/install.sh"
-						. ${to}/install.sh
+						echo -e "\t\tRunning ${to}"
+						. ${to}
 					fi
 				fi
-				files_done+=("${j}")
+				files_done+=("${file}")
 			done
 			
 			# Break if we have done the host and behaviour is hostorall
@@ -273,18 +283,23 @@ function do_uninstall() {
 		then
 			echo "Unlinking files from ${names[${i}]} folder"
 			local j
-			for j in $(ls -A ${dir})
+			for j in $(find ${dir} -mindepth 1 -not -name ".DS_Store")
 			do
-				local from=${dir}/${j}
-				local to=${dir_to}/${j}
+				local file="${j#${dir}/}"
+				local from="${dir}/${file}"
+				local to="${dir_to}/${file}"
 				# If we have already unlinked the file then break
-				if array_contains "${files_done}" "${j}"
+				if array_contains "${files_done}" "${file}"
 				then
 					break
 				fi
+				if [ -d "${to}" ]
+				then
+					continue
+				fi
 				if [ -e "${to}" -a ! -L "${to}" ]
 				then
-				echo -e "\tThe file ${to} exists and is not a link, skipping. Please review and remove manually:\n\t\trm ${to}"
+					echo -e "\tThe file ${to} exists and is not a link, skipping. Please review and remove manually:\n\t\trm ${to}"
 				else
 					# Probably safe to delete an existing symlink
 					if [ -L "${to}" ]
@@ -298,7 +313,7 @@ function do_uninstall() {
 						execute rm "${to}"
 					fi
 				fi
-				files_done+=("${j}")
+				files_done+=("${file}")
 			done
 			
 			# Break if we have done the host and behaviour is hostorall
