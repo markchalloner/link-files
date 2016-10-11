@@ -194,10 +194,16 @@ function do_install() {
 				local file="${j#${dir}/}"
 				local from="${dir}/${file}"
 				local to="${dir_to}/${file}"
-				# If we have already linked the file then break
+				local parent_dir="$(basename "$(dirname "${file}")")"
+				# If parent_dir is #copy or #hardlink then break
+				if [ "${parent_dir}" == "#copy" -o "${parent_dir}" == "#hardlink" ]
+				then
+					continue
+				fi
+				# If we have already linked the file then continue
 				if array_contains "${files_done}" "${file}"
 				then
-					break
+					continue
 				fi
 				local link
 				if [ -d "${from}" ]
@@ -288,10 +294,10 @@ function do_uninstall() {
 				local file="${j#${dir}/}"
 				local from="${dir}/${file}"
 				local to="${dir_to}/${file}"
-				# If we have already unlinked the file then break
+				# If we have already unlinked the file then continue
 				if array_contains "${files_done}" "${file}"
 				then
-					break
+					continue
 				fi
 				if [ -d "${to}" ]
 				then
