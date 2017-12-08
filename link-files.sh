@@ -48,6 +48,7 @@ function usage() {
 		                               all        - use only files from the all folder never the host folder
 		  -c, --create               optional: create the link-files folder hierachy at --from or ${dir_from_default} if not specified
 		  -o, --force                optional: links files even if there is one present. Will save current file as <filename>.bak.<YYYYMMDDHHMMSS>
+		  -q, --quiet                optional: show no output
 		  -d, --dryrun               optional: performs a dryrun
 
 	EOF
@@ -106,6 +107,17 @@ function execute() {
 }
 
 ########################################
+# Output
+########################################
+
+function output() {
+	if [ -z "${quiet}" ]
+        then
+		echo "${@}"
+	fi
+}
+
+########################################
 # Helpers
 ########################################
 
@@ -145,7 +157,7 @@ function dir_trailing_slash_remove() {
 			break
 		fi
 	done
-	echo "${dir}"
+	output "${dir}"
 }
 
 ########################################
@@ -187,7 +199,7 @@ function do_install() {
 		local dir="${dirs[${i}]}"
 		if [ -d "${dir}" ]
 		then
-			echo "Linking files from ${names[${i}]} folder"
+			output "Linking files from ${names[${i}]} folder"
 			local j
 			for j in $(find ${dir} -mindepth 1 -not -name ".DS_Store")
 			do
@@ -210,7 +222,7 @@ function do_install() {
 				then
 					if [ ! -e "${to}" ]
 					then
-						echo -e "\tCreating folder ${to}"
+						output -e "\tCreating folder ${to}"
 						execute mkdir -p "${to}"
 					fi
 					continue
@@ -220,11 +232,11 @@ function do_install() {
 					if [ -n "${force}" ]
 					then
 						to_bak="${to}.bak.${date}"
-						echo -e "\tThe file ${to} exists and is not a link, renaming to $(basename ${to_bak})"
+						output -e "\tThe file ${to} exists and is not a link, renaming to $(basename ${to_bak})"
 						execute mv "${to}" "${to_bak}"
 						link=1
 					else 
-						echo -e "\tThe file ${to} exists and is not a link, skipping. Please review and link manually:\n\t\tln -s \"${from}\" \"${to}\""
+						output -e "\tThe file ${to} exists and is not a link, skipping. Please review and link manually:\n\t\tln -s \"${from}\" \"${to}\""
 						link=0
 					fi
 				else
@@ -237,11 +249,11 @@ function do_install() {
 					then
 						execute rm "${to}"
 					fi
-					echo -e "\tLinking from ${from} to ${to}"
+					output -e "\tLinking from ${from} to ${to}"
 					execute ln -s "${from}" "${to}"
 					if [ $(basename "${from}") == "install.sh" ]
 					then
-						echo -e "\t\tRunning ${to}"
+						output -e "\t\tRunning ${to}"
 						. ${to}
 					fi
 				fi
@@ -254,7 +266,7 @@ function do_install() {
 				break
 			fi
 		else
-			echo "Unable to find ${dir}"
+			output "Unable to find ${dir}"
 		fi
 	done
 }
@@ -287,7 +299,7 @@ function do_uninstall() {
 		local dir="${dirs[${i}]}" 
 		if [ -d "${dir}" ]
 		then
-			echo "Unlinking files from ${names[${i}]} folder"
+			output "Unlinking files from ${names[${i}]} folder"
 			local j
 			for j in $(find ${dir} -mindepth 1 -not -name ".DS_Store")
 			do
@@ -305,15 +317,15 @@ function do_uninstall() {
 				fi
 				if [ -e "${to}" -a ! -L "${to}" ]
 				then
-					echo -e "\tThe file ${to} exists and is not a link, skipping. Please review and remove manually:\n\t\trm ${to}"
+					output -e "\tThe file ${to} exists and is not a link, skipping. Please review and remove manually:\n\t\trm ${to}"
 				else
 					# Probably safe to delete an existing symlink
 					if [ -L "${to}" ]
 					then
-						echo -e "\tUnlinking ${to} (${from})"
+						output -e "\tUnlinking ${to} (${from})"
 						if [ -d "${from}" ] && [ -f "${from}/uninstall.sh" ]
 						then
-							echo -e "\t\tRunning ${to}/uninstall.sh"
+							output -e "\t\tRunning ${to}/uninstall.sh"
 							. ${to}/uninstall.sh
 						fi
 						execute rm "${to}"
@@ -328,7 +340,7 @@ function do_uninstall() {
 				break
 			fi
 		else
-			echo "Unable to find ${dir}"
+			output "Unable to find ${dir}"
 		fi
 	done	
 }
@@ -368,6 +380,9 @@ do
 		-o|--force)
 			force=1
 			;;
+		-q|--quiet)
+			quiet=1
+			;;
 		-d|--dryrun)
 			dryrun=1
 			;;
@@ -397,7 +412,7 @@ done
 [ -n "${create}" ] || [ -n "${install}" ] || [ -n "${uninstall}" ] || usage
 
 # Set default behaviour
-if [ -z "${behaviour}" ] && $(echo "${behaviour}" | grep -q -v "^\(host\|host\(and\|or\)all\|all\)$")
+if [ -z "${behaviour}" ] && grep -q -v "^\(host\|host\(and\|or\)all\|all\)$" <<< "${behaviour}"
 then
 	behaviour="hostandall"
 fi
@@ -405,7 +420,7 @@ fi
 # Dryrun option
 if [ -n "${dryrun}" ]
 then
-	echo "Dry run option activated. Commands will be logged instead of being run."
+	output "Dry run option activated. Commands will be logged instead of being run."
 fi
 
 # Set variables
@@ -414,19 +429,19 @@ dir_host="${dir_from}/${host}"
 
 if [ -n "${create}" ]
 then
-	echo Creating...
+	output Creating...
 	do_create "${dir_from}" "${dir_host}" "${dir_all}"
-	echo Done
+	output Done
 fi
 
 if [ -n "${install}" ]
 then
-	echo Installing...
+	output Installing...
 	do_install "${behaviour}" "${dir_host}" "${dir_all}"
-	echo Done
+	output Done
 elif [ -n "${uninstall}" ]
 then
-	echo Uninstalling...
+	output Uninstalling...
 	do_uninstall "${behaviour}" "${dir_host}" "${dir_all}"
-	echo Done
+	output Done
 fi

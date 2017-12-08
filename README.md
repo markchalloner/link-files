@@ -32,6 +32,7 @@ Options
                                all        - use only files from the all folder never the host folder
   -c, --create               optional: create the link-files folder hierachy at --from or /Users/markchalloner/.link-files if not specified
   -o, --force                optional: links files even if there is one present. Will save current file as <filename>.bak.<YYYYMMDDHHMMSS>
+  -q, --quiet                optional: show no output
   -d, --dryrun               optional: performs a dryrun
 ```
 
